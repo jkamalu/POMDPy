@@ -3,12 +3,6 @@ from pomdpy.pomdp import HistoricalData
 from .light_action import ActionType
 import numpy as np
 from enum import Enum
-import util
-
-class LightColor(Enum):
-    GREEN = 0
-    YELLOW = 1
-    RED = 2 
 
 class LightData(HistoricalData):
     """
@@ -50,7 +44,7 @@ class LightData(HistoricalData):
         belief_update(self, old_belief, action, observation)
         (next_data.color_probabilities, next_data.distance_belief, next_data.distance_confidence) = self.model.belief_update((self.color_probabilities, self.distance_belief, self.distance_confidence), action,
                                                                 observation)
-        
+
         return next_data
 
     @staticmethod
@@ -61,4 +55,3 @@ class LightData(HistoricalData):
         """
 
         return [ActionType.DECELERATE_50, ActionType.DECELERATE_20, ActionType.DECELERATE_5, ActionType.NO_ACCELERATION, ActionType.ACCELERATE_5, ActionType.ACCELERATE_20, ActionType.ACCELERATE_50]
-
