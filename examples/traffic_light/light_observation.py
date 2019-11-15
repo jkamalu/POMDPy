@@ -12,12 +12,14 @@ class LightObservation(DiscreteObservation):
     or vice versa
     """
 
-    def __init__(self, wavelength_observed, distance_observed):
+    def __init__(self, measurements):
         if source_of_roar is not None:
             super(LightObservation, self).__init__((1, 0)[source_of_roar[0]])
         else:
             super(LightObservation, self).__init__(-1)
-        self.wavelength_observed = source_of_roar
+        wavelength_observed = measurements[0]
+        distance_observed = measurements[1]
+        self.wavelength_observed = wavelength_observed
         self.distance_observed = distance_observed
 
     def copy(self):
@@ -38,6 +40,3 @@ class LightObservation(DiscreteObservation):
     def to_string(self):
         obs = "Wavelength observed is " + str(self.wavelength_observed) + ", and distance observed is " + str(self.distance_observed)
         return obs
-
-
-
