@@ -1,29 +1,25 @@
+import json
 import numpy as np
 from pomdpy.pomdp import model
 from .light_action import TrafficLightAction, Acceleration
 from .light_state import TrafficLightState
-from .light_observation import LightObservation
-from .light_data import LightData
+from .light_observation import TrafficLightObservation
+from .light_data import TrafficLightData
 from pomdpy.discrete_pomdp import DiscreteActionPool
 from pomdpy.discrete_pomdp import DiscreteObservationPool
 
 class TrafficLightModel(model.Model):
 
-    def __init__(self, problem_name="Traffic Light"):
+    def __init__(self, problem_name="TrafficLight"):
         super().__init__(problem_name)
         self.num_actions = len(Acceleration)
+        self.config = json.load("config.json")
 
     def start_scenario(self):
-        self.light_cycle = [10, 2, 10]
-
-        self.road_length = 400
-        self.intersection_length = 20
-        self.speed_limit = 20
-        self.max_speed = 40
-
-        self.distance_stdev = 4
-        self.color_stdev = 50
-        self.color_means = [540, 600, 680]
+        position = self.config["init_position"]
+        velocity = self.config["init_velocity"]
+        light = self.config["init_light"]
+        return TrafficLightState(position, velocity, light)
 
     ''' --------- Abstract Methods --------- '''
 
@@ -37,9 +33,9 @@ class TrafficLightModel(model.Model):
         return DiscreteObservationPool(solver)
 
     def sample_state_uninformed(self):
-        random_position = np.random.randint(self.road_length // 2)
-        random_speed = np.random.randint(self.speed_limit)
-        random_light = np.random.randint(sum(self.light_cycle))
+        random_position = np.random.randint(self.config["road_length"] // 2)
+        random_speed = np.random.randint(self.config["speed_upper_bound"])
+        random_light = np.random.randint(sum(self.config["light_cycle"]))
         return TrafficLightState(random_position, random_speed, random_light)
 
     def get_all_states(self):
@@ -68,10 +64,14 @@ class TrafficLightModel(model.Model):
         return observations
 
     def get_legal_actions(self, state):
-        raise NotImplementedError("Legal actions need to be enumerated.")
+        legal_actions = []
+        for a in Acceleration:
+            if state.speed + a.value >= 0 and state.speed + a.value <= self.max_speed:
+                legal_actions.append(a.value)
+        return legal_actions
 
     def is_valid(self, state):
-        raise NotImplementedError("State validity need to be implemented.")
+        return state.position >= 0
 
     def reset_for_simulation(self):
         self.start_scenario()
@@ -86,16 +86,31 @@ class TrafficLightModel(model.Model):
         raise NotImplementedError("Max undiscounted reward needs to be defined.")
 
     @staticmethod
+    def state_transition(state, action):
+        speed = state.speed + action
+        position = state.position + speed
+        light = (state.light) + 1 % sum(self.config["light_cycle"])
+        new_state = TrafficLightState(position, speed, light)
+
+    @staticmethod
     def get_transition_matrix():
         """
         |A| x |S| x |S'| matrix, for tiger problem this is 3 x 2 x 2
         :return:
         """
-        return np.array([
-            [[1.0, 0.0], [0.0, 1.0]],
-            [[0.5, 0.5], [0.5, 0.5]],
-            [[0.5, 0.5], [0.5, 0.5]]
-        ])
+        action_state_state_combos = []
+        for action in self.get_all_actions:
+            state_state_combos = []
+            for state in self.get_all_states:
+                transition_state = state_transition(state, action)
+                state_combos = []
+                for state' in self.get_all_states:
+                    value = 1 if state' == transition_state else 0
+                    state_combos.append(value)
+                state_state_combos.append(np.array(state_combos))
+            action_state_combos.append(np.array(state_state_combos))
+        return np.array(action_state_combos)
+
 
     @staticmethod
     def get_observation_matrix():

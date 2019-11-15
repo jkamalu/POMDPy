@@ -2,7 +2,7 @@ from __future__ import print_function
 from pomdpy.discrete_pomdp import DiscreteObservation
 
 
-class LightObservation(DiscreteObservation):
+class TrafficLightObservation(DiscreteObservation):
     """
     For num_doors = 2, there is an 85 % of hearing the roaring coming from the tiger door.
     There is a 15 % of hearing the roaring come from the reward door.
@@ -14,16 +14,16 @@ class LightObservation(DiscreteObservation):
 
     def __init__(self, measurements):
         if source_of_roar is not None:
-            super(LightObservation, self).__init__((1, 0)[source_of_roar[0]])
+            super().__init__((1, 0)[source_of_roar[0]])
         else:
-            super(LightObservation, self).__init__(-1)
+            super().__init__(-1)
         wavelength_observed = measurements[0]
         distance_observed = measurements[1]
         self.wavelength_observed = wavelength_observed
         self.distance_observed = distance_observed
 
     def copy(self):
-        return LightObservation(self.wavelength_observed, self.distance_observed)
+        return TrafficLightObservation(self.wavelength_observed, self.distance_observed)
 
     def equals(self, other_observation):
         return self.wavelength_observed == other_observation.wavelength_observed and self.distance_observed == other_observation.distance_observed
@@ -38,5 +38,4 @@ class LightObservation(DiscreteObservation):
         print(self.to_string())
 
     def to_string(self):
-        obs = "Wavelength observed is " + str(self.wavelength_observed) + ", and distance observed is " + str(self.distance_observed)
-        return obs
+        return "Wavelength observed is " + str(self.wavelength_observed) + ", and distance observed is " + str(self.distance_observed)

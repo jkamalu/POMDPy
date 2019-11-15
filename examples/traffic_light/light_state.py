@@ -7,14 +7,17 @@ class TrafficLightState(DiscreteState):
         self.speed = speed
         self.light = light
 
-    def __eq__(self, other_state):
+    def equals(self, other_state):
         equals = self.position == other_state.position
         equals = self.speed == other_state.speed and equals
         equals = self.light == other_state.light and equals
         return equals
 
-    def __hash__(self):
+    def hash(self):
         return hash((self.position, self.speed, self.light))
 
-    def __repr__(self):
+    def print_state(self):
+        print(self.to_string())
+
+    def to_string(self):
         return "[{} light {} units from car going {} units/sec]".format(self.light, self.position, self.speed)

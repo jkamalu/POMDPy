@@ -4,24 +4,17 @@ from .light_action import ActionType
 import numpy as np
 from enum import Enum
 
-class LightData(HistoricalData):
-    """
-    Used to store the probabilities that the tiger is behind a certain door.
-    This is the belief distribution over the set of possible states.
-    For a 2-door system, you have
-        P( X = 0 ) = p
-        P( X = 1 ) = 1 - p
-    """
+class TrafficLightData(HistoricalData):
+
     def __init__(self, model):
         self.model = model
         self.observations_passed = 0
-        ''' Initially there is an equal probability of the tiger being in either door'''
         self.color_probabilities = [float(1/3), float(1/3), float(1/3)]
         self.distance_belief = None
         self.distance_confidence = None
 
     def copy(self):
-        dat = LightData(self.model)
+        dat = TrafficLightData(self.model)
         dat.observations_passed = self.observations_passed
         dat.color_probabilities = self.color_probabilities
         dat.distance_belief = self.distance_belief
@@ -37,21 +30,21 @@ class LightData(HistoricalData):
         next_data = self.copy()
 
         self.observations_passed += 1
-        '''
-        '''
 
         ''' ------- Bayes update of belief state -------- '''
         belief_update(self, old_belief, action, observation)
-        (next_data.color_probabilities, next_data.distance_belief, next_data.distance_confidence) = self.model.belief_update((self.color_probabilities, self.distance_belief, self.distance_confidence), action,
-                                                                observation)
+
+        next_data.color_probabilities = self.model.belief_update((self.color_probabilities, self.distance_belief, self.distance_confidence)
+        next_data.distance_belief = action
+        next_data.distance_confidence = observation
 
         return next_data
 
     @staticmethod
     def generate_legal_actions():
         """
-        At each non-terminal state, the agent can listen or choose to open the door based on the current door probabilities
-        :return:
+        At each non-terminal state, the agent can listen or choose to open the
+        door based on the current door probabilities
         """
 
-        return [ActionType.DECELERATE_50, ActionType.DECELERATE_20, ActionType.DECELERATE_5, ActionType.NO_ACCELERATION, ActionType.ACCELERATE_5, ActionType.ACCELERATE_20, ActionType.ACCELERATE_50]
+        raise NotImplementedError("Actions legality is function of state.")

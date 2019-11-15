@@ -8,5 +8,11 @@ class TrafficLightAction(DiscreteAction):
     def __init__(self, value):
         self.value = value
 
-    def __repr__(self):
+    def copy(self):
+        return TrafficLightAction(self.value)
+
+    def print_action(self):
+        print(self.to_string())
+
+    def to_string(self):
         return "[Acceleration = {}]".format(Acceleration(self.value).name)
