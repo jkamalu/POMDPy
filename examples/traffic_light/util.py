@@ -5,14 +5,26 @@ import json
 
 config = json.load("config.json")
 
-MIN_WAVELENGTH = min(config["color_means"])
-MAX_WAVELENGTH = max(config["color_means"])
-MAX_DISTANCE = config["road_length"] + config["buffer_length"]
-MIN_DISTANCE = -config["intersection_length"]
+def min_wavelength():
+    return min(config["color_means"])
+
+def max_wavelength():
+    return max(config["color_means"])
+
+def max_distance():
+    return config["road_length"]
+
+def min_distance():
+    return -config["intersection_length"]
+
+MIN_WAVELENGTH = min_wavelength()
+MAX_WAVELENGTH = max_wavelength()
+MAX_DISTANCE = max_distance()
+MIN_DISTANCE = min_distance()
 
 MIN_WAVELENGTH_OBS = MIN_WAVELENGTH - 2 * config["color_stdev"]
 MAX_WAVELENGTH_OBS = MAX_WAVELENGTH + 2 * config["color_stdev"]
-MAX_DISTANCE_OBS = config["road_length"] + config["buffer_length"] + 2 * config["distance_stdev"]
+MAX_DISTANCE_OBS = config["road_length"] + 2 * config["distance_stdev"]
 MIN_DISTANCE_OBS = -config["intersection_length"] - 2 * config["distance_stdev"]
 
 class Acceleration(Enum):
