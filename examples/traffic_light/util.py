@@ -29,6 +29,19 @@ class LightColor(Enum):
     YELLOW = 1
     RED = 2
 
+class Belief():
+    def __init__(self, p_green=float(1/3), p_yellow=float(1/3), p_red=float(1/3), belief_d=None, confidence_d = None):
+        self.green = p_green
+        self.yellow = p_yellow
+        self.red = p_red
+        self.dist = belief_d
+        self.dist_confidence = confidence_d
+
+    def __eq__(self, other):
+        if self.green == other.green and self.yellow == other.yellow and self.red == other.red and self.dist == other.dist and self.dist_confidence = other.dist_confidence:
+            return True
+        return False
+
 def pdf(mean, std, value):
     u = float(value - mean) / abs(std)
     y = (1.0 / (np.sqrt(2 * np.pi) * abs(std))) * np.exp(-u * u / 2.0)

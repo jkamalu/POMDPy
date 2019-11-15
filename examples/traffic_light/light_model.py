@@ -52,15 +52,9 @@ class TrafficLightModel(model.Model):
         return [TrafficLightAction(accel.value) for accel in Acceleration]
 
     def get_all_observations(self):
-        wavelength_min = min(self.color_means) - 2 * self.color_stdev
-        wavelength_max = max(self.color_means) + 2 * self.color_stdev
-
-        distance_min = -(self.intersection_length + 2 * self.distance_stdev)
-        distance_max = self.road_length + 2 * self.distance_stdev
-
         observations = []
-        for distance_measurements in range(distance_min, distance_max + 1):
-            for wavelength_measurements in range(wavelength_min, wavelength_max + 1):
+        for distance_measurements in range(MIN_DISTANCE_OBS, MAX_DISTANCE_OBS + 1):
+            for wavelength_measurements in range(MIN_WAVELENGTH_OBS, MAX_WAVELENGTH_OBS + 1):
                 observations.append([distance_measurement, wavelength_measurements])
 
         return observations
@@ -123,17 +117,22 @@ class TrafficLightModel(model.Model):
         observations = []
         for action in self.get_all_actions:
             for state in self.get_all_states:
+                state_obs_probs = []
+                color = state_to_color_index(state)
+                observation_probs = []
                 for observation in self.get_all_observations:
-                color = -1
-                light_range = 0
-                while(state.light > light_range):
-                    color += 1
-                    light_range += self.config["light_cycle"][color]
-                for observation in self.get_all_observations:
+                    color_mean = self.config["color_means"][color]
+                    color_std = self.config["color_stdev"]
+                    color_probab = calculate_trunc_norm_prob(observation.wavelength_observed, color_mean, color_std, MIN_WAVELENGTH_OBS, MAX_WAVELENGTH_OBS)
 
+                    dist_mean = state.position
+                    dist_std = self.config["distance_stdev"]
+                    distance_probab = calculate_trunc_norm_prob(observation.distance_observed, dist_mean, dist_std, MIN_DISTANCE_OBS, MAX_DISTANCE_OBS)
 
-                TrafficLightState(position, speed, light)
-
+                    observation_probs.append(color_probab * distance_probab)
+                state_obs_probs.append(np.array(observation_probs))
+            observations.append(np.array(state_obs_probs))
+        return np.array(observations)
 
     @staticmethod
     def get_reward_matrix():
@@ -149,7 +148,7 @@ class TrafficLightModel(model.Model):
 
     @staticmethod
     def get_initial_belief_state():
-        return np.array([0.5, 0.5])
+        return Belief()
 
     ''' Factory methods '''
 
@@ -165,8 +164,8 @@ class TrafficLightModel(model.Model):
         if action is None:
             print("ERROR: Tried to generate a step with a null action")
             return None
-        elif not isinstance(action, TigerAction):
-            action = TigerAction(action)
+        elif not isinstance(action, TrafficLightAction):
+            action = TrafficLightAction(action)
 
         result = model.StepResult()
         result.is_terminal = self.make_next_state(action)
