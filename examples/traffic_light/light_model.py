@@ -55,8 +55,8 @@ class TrafficLightModel(model.Model):
         wavelength_min = min(self.color_means) - 2 * self.color_stdev
         wavelength_max = max(self.color_means) + 2 * self.color_stdev
 
-        distance_min = -2 * self.distance_stdev
-        distance_max = self.road_length + self.intersection_length + 2 * self.distance_stdev
+        distance_min = -(self.intersection_length + 2 * self.distance_stdev)
+        distance_max = self.road_length + 2 * self.distance_stdev
 
         observations = []
         for distance_measurements in range(distance_min, distance_max + 1):
@@ -124,6 +124,13 @@ class TrafficLightModel(model.Model):
         for action in self.get_all_actions:
             for state in self.get_all_states:
                 for observation in self.get_all_observations:
+                color = -1
+                light_range = 0
+                while(state.light > light_range):
+                    color += 1
+                    light_range += self.config["light_cycle"][color]
+                for observation in self.get_all_observations:
+
 
                 TrafficLightState(position, speed, light)
 

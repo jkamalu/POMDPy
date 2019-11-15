@@ -25,3 +25,16 @@ def pdf(mean, std, value):
 
 def get_truncated_norm(mean, std, low, upp):
     return truncnorm((low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
+
+def calculate_trunc_norm_prob(value, mean, std, low, upp):
+    upper = truncnorm.cdf(value + 0.5, (low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
+    lower = truncnorm.cdf(value - 0.5, (low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
+    return upper - lower
+
+def state_to_color_index(state):
+    color = -1
+    light_range = 0
+    while(state.light > light_range):
+        color += 1
+        light_range += self.config["light_cycle"][color]
+    return color
