@@ -8,8 +8,7 @@
     "road_length" = 400
     "buffer_length" = 10
     "intersection_length" = 20
-    "speed_upper_bound" = 20
-    "speed_lower_bound" = 20
+    "speed_limit" = 20
     "max_speed" = 40
 
     "distance_stdev" = 4

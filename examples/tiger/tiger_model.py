@@ -181,14 +181,7 @@ class TigerModel(model.Model):
             return -1.0
 
         if is_terminal:
-            assert action.bin_number > 0
-            if action.bin_number == self.tiger_door:
-                ''' You chose the door with the tiger '''
-                # return -20
-                return -20.
-            else:
-                ''' You chose the door with the prize! '''
-                return 10.0
+            return 1
         else:
             print("make_reward - Illegal action was used")
             return 0.0

@@ -98,12 +98,12 @@ class TrafficLightModel(model.Model):
         :return:
         """
         action_state_state_combos = []
-        for action in self.get_all_actions:
+        for action in self.get_all_actions():
             state_state_combos = []
-            for state in self.get_all_states:
+            for state in self.get_all_states():
                 transition_state = state_transition(state, action)
                 state_combos = []
-                for state' in self.get_all_states:
+                for state' in self.get_all_states():
                     value = 1 if state' == transition_state else 0
                     state_combos.append(value)
                 state_state_combos.append(np.array(state_combos))
@@ -118,12 +118,12 @@ class TrafficLightModel(model.Model):
         :return:
         """
         observations = []
-        for action in self.get_all_actions:
-            for state in self.get_all_states:
+        for action in self.get_all_actions():
+            for state in self.get_all_states():
                 state_obs_probs = []
                 color = state_to_color_index(state)
                 observation_probs = []
-                for observation in self.get_all_observations:
+                for observation in self.get_all_observations()):
                     color_mean = self.config["color_means"][color]
                     color_std = self.config["color_stdev"]
                     color_probab = calculate_trunc_norm_prob(observation.wavelength_observed, color_mean, color_std, MIN_WAVELENGTH_OBS, MAX_WAVELENGTH_OBS)
@@ -137,17 +137,19 @@ class TrafficLightModel(model.Model):
             observations.append(np.array(state_obs_probs))
         return np.array(observations)
 
-    @staticmethod
-    def get_reward_matrix():
+    def get_reward_matrix(self):
         """
         |A| x |S| matrix
         :return:
         """
-        return np.array([
-            [-1., -1.],
-            [-20.0, 10.0],
-            [10.0, -20.0]
-        ])
+        reward_matrix = []
+        for action in self.get_all_actions():
+            state_rewards = []
+            for state in self.get_all_states():
+                terminal = state.position >= self.config["road_length"] + self.config["intersection_length"]
+                state_rewards.append(self.make_reward(action, (state, terminal)))
+            reward_matrix.append(np.array(state_rewards))
+        return np.array(reward_matrix)
 
     @staticmethod
     def get_initial_belief_state():
@@ -179,7 +181,7 @@ class TrafficLightModel(model.Model):
         return result
 
     def make_next_state(self, state, action):
-        max_position = self.config["road_length"] + self.config["buffer_length"] + self.config["intersection_length"]
+        max_position = self.config["road_length"] + self.config["intersection_length"]
         terminal = state.position >= max_position
 
         new_speed = state.speed + action.value
@@ -196,22 +198,21 @@ class TrafficLightModel(model.Model):
         :param is_terminal:
         :return: reward
         """
-
-        if action.bin_number == ActionType.LISTEN:
-            return -1.0
-
-        if is_terminal:
-            assert action.bin_number > 0
-            if action.bin_number == self.tiger_door:
-                ''' You chose the door with the tiger '''
-                # return -20
-                return -20.
-            else:
-                ''' You chose the door with the prize! '''
-                return 10.0
-        else:
-            print("make_reward - Illegal action was used")
-            return 0.0
+        (new_state, end) = is_terminal
+        if end:
+            return 10
+        ## Penalize for every timestep not at the goal state.
+        rewards = -1
+        ## Penalize if the car stops outside the buffer.
+        if state.velocity == 0 and (state.position > self.config["road_length"] or state.position < self.config["road_length"] - self.config["buffer_length"]):
+            rewards -= 5
+        ## Penalize if we're in the intersection on a red light.
+        if state_to_color_index(next_state) == 2 and (state.position > self.config["road_length"] and state.position <= self.config["road_length"] + self.config["intersection_length"])
+            rewards -= 100
+        ## Penalize for going over the speed limit.
+        if state.velocity > self.config["speed_limit"]:
+            rewards -= (state.velocity - self.config["speed_limit"])
+        return reward
 
     def make_observation(self, action, next_state):
         """
