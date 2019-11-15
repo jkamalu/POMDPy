@@ -1,8 +1,4 @@
-from __future__ import absolute_import
 from pomdpy.pomdp import HistoricalData
-from .light_action import ActionType
-import numpy as np
-from enum import Enum
 
 class Belief():
     def __init__(self, p_green=float(1/3), p_yellow=float(1/3), p_red=float(1/3), belief_d=None, confidence_d = None):
