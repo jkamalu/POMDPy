@@ -82,7 +82,7 @@ class TrafficLightModel(model.Model):
         pass
 
     def get_max_undiscounted_return(self):
-        raise NotImplementedError("Max undiscounted reward needs to be defined.")
+        return 10
 
     @staticmethod
     def state_transition(state, action):
