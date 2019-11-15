@@ -1,0 +1,18 @@
+{
+    "init_position" = 0
+    "init_velocity" = 0
+    "init_light" = 0
+
+    "light_cycle" = [10, 2, 10]
+
+    "road_length" = 400
+    "buffer_length" = 10
+    "intersection_length" = 20
+    "speed_upper_bound" = 20
+    "speed_lower_bound" = 20
+    "max_speed" = 40
+
+    "distance_stdev" = 4
+    "color_stdev" = 50
+    "color_means" = [540, 600, 680]
+}
