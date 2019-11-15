@@ -1,10 +1,12 @@
 import json
 import numpy as np
 from pomdpy.pomdp import model
+from scipy.stats import truncnorm
 from .light_action import TrafficLightAction, Acceleration
 from .light_state import TrafficLightState
 from .light_observation import TrafficLightObservation
 from .light_data import TrafficLightData
+from util import *
 from pomdpy.discrete_pomdp import DiscreteActionPool
 from pomdpy.discrete_pomdp import DiscreteObservationPool
 
@@ -118,11 +120,13 @@ class TrafficLightModel(model.Model):
         |A| x |S| x |O| matrix
         :return:
         """
-        return np.array([
-            [[0.85, 0.15], [0.15, 0.85]],
-            [[0.5, 0.5], [0.5, 0.5]],
-            [[0.5, 0.5], [0.5, 0.5]]
-        ])
+        observations = []
+        for action in self.get_all_actions:
+            for state in self.get_all_states:
+                for observation in self.get_all_observations:
+
+                TrafficLightState(position, speed, light)
+
 
     @staticmethod
     def get_reward_matrix():

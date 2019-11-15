@@ -22,3 +22,6 @@ def pdf(mean, std, value):
     u = float(value - mean) / abs(std)
     y = (1.0 / (math.sqrt(2 * math.pi) * abs(std))) * math.exp(-u * u / 2.0)
     return y
+
+def get_truncated_norm(mean, std, low, upp):
+    return truncnorm((low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
