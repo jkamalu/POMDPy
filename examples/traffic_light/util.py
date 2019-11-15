@@ -29,6 +29,9 @@ def pdf(mean, std, value):
     y = (1.0 / (np.sqrt(2 * np.pi) * abs(std))) * np.exp(-u * u / 2.0)
     return y
 
+def get_truncated_norm(mean, std, low, upp):
+    return truncnorm((low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
+
 def observation_to_index(obs):
     assert len(obs) == 2
     wavelength, distance = obs
