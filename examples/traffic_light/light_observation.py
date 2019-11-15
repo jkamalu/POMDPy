@@ -1,26 +1,13 @@
-from __future__ import print_function
 from pomdpy.discrete_pomdp import DiscreteObservation
 
+from util import observation_to_index, index_to_observation
 
 class TrafficLightObservation(DiscreteObservation):
-    """
-    For num_doors = 2, there is an 85 % of hearing the roaring coming from the tiger door.
-    There is a 15 % of hearing the roaring come from the reward door.
-
-    source_of_roar[0] = 0 (door 1)
-    source_of_roar[1] = 1 (door 2)
-    or vice versa
-    """
 
     def __init__(self, measurements):
-        if source_of_roar is not None:
-            super().__init__((1, 0)[source_of_roar[0]])
-        else:
-            super().__init__(-1)
-        wavelength_observed = measurements[0]
-        distance_observed = measurements[1]
-        self.wavelength_observed = wavelength_observed
-        self.distance_observed = distance_observed
+        super().__init__(observation_to_index(measurements))
+        self.wavelength_observed = measurements[0]
+        self.distance_observed = measurements[1]
 
     def copy(self):
         return TrafficLightObservation(self.wavelength_observed, self.distance_observed)
@@ -38,4 +25,4 @@ class TrafficLightObservation(DiscreteObservation):
         print(self.to_string())
 
     def to_string(self):
-        return "Wavelength observed is " + str(self.wavelength_observed) + ", and distance observed is " + str(self.distance_observed)
+        return "[W_obs = " + str(self.wavelength_observed) + ", D_obs = " + str(self.distance_observed) + "]"

@@ -1,8 +1,4 @@
-from __future__ import absolute_import
 from pomdpy.pomdp import HistoricalData
-from .light_action import ActionType
-import numpy as np
-from enum import Enum
 
 class TrafficLightData(HistoricalData):
 

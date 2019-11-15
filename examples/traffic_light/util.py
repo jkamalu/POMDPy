@@ -7,11 +7,13 @@ config = json.load("config.json")
 
 MIN_WAVELENGTH = min(config["color_means"])
 MAX_WAVELENGTH = max(config["color_means"])
+MAX_DISTANCE = config["road_length"] + config["buffer_length"]
+MIN_DISTANCE = -config["intersection_length"]
 
 MIN_WAVELENGTH_OBS = MIN_WAVELENGTH - 2 * config["color_stdev"]
 MAX_WAVELENGTH_OBS = MAX_WAVELENGTH + 2 * config["color_stdev"]
-MAX_DISTANCE_OBS = config["road_length"] + 2 * config["distance_stdev"]
-MIN_DISTANCE_OBS = config["intersection_length"] - 2 * config["distance_stdev"]
+MAX_DISTANCE_OBS = config["road_length"] + config["buffer_length"] + 2 * config["distance_stdev"]
+MIN_DISTANCE_OBS = -config["intersection_length"] - 2 * config["distance_stdev"]
 
 class Acceleration(Enum):
     NEGATIVE_LRG = -8
@@ -37,19 +39,17 @@ def pdf(mean, std, value):
 def get_truncated_norm(mean, std, low, upp):
     return truncnorm((low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
 
-
 def calculate_trunc_norm_prob(value, mean, std, low, upp):
     upper = truncnorm.cdf(value + 0.5, (low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
     lower = truncnorm.cdf(value - 0.5, (low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
     return upper - lower
 
 def state_to_color_index(state):
-    color = -1
-    light_range = 0
-    while(state.light > light_range):
-        color += 1
-        light_range += self.config["light_cycle"][color]
-    return color
+    light = 0
+    for color in enumerate(config["light_cycle"]):
+        light += config["light_cycle"][color]
+        if state.light <= light:
+            return color
 
 def observation_to_index(obs):
     wavelength, distance = obs
@@ -66,12 +66,15 @@ def index_to_observation(idx):
     return wavelength + MIN_WAVELENGTH_OBS, distance + MIN_DISTANCE_OBS
 
 def state_to_observation(state):
-    pass
     position, speed, light = state
     return np.ravel_multi_index(
-        (wavelength - , distance - MIN_DISTANCE_OBS),
-        (MAX_WAVELENGTH_OBS - MIN_WAVELENGTH_OBS, MAX_DISTANCE_OBS - MIN_DISTANCE_OBS)
+        (distance - MIN_DISTANCE, speed, light)),
+        (MAX_DISTANCE - MIN_DISTANCE, config["max_speed"], sum(config["light_cycle"]))
     )
 
 def observation_to_state(idx):
-    pass
+    position, speed, light = np.unravel_index(
+        idx,
+        (MAX_DISTANCE - MIN_DISTANCE, config["max_speed"], sum(config["light_cycle"]))
+    )
+    return position + MIN_DISTANCE, speed, light
