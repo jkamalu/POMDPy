@@ -5,8 +5,13 @@ import json
 
 config = json.load("config.json")
 
-MIN_WAVELENGTH = min(config["color_means"] - 2 * config["color_stdev"])
-MAX_WAVELENGTH = max(config["color_means"] + 2 * config["color_stdev"])
+MIN_WAVELENGTH = min(config["color_means"])
+MAX_WAVELENGTH = max(config["color_means"])
+
+MIN_WAVELENGTH_OBS = MIN_WAVELENGTH - 2 * config["color_stdev"]
+MAX_WAVELENGTH_OBS = MAX_WAVELENGTH + 2 * config["color_stdev"]
+MAX_DISTANCE_OBS = config["road_length"] + 2 * config["distance_stdev"]
+MIN_DISTANCE_OBS = config["intersection_length"] - 2 * config["distance_stdev"]
 
 class Acceleration(Enum):
     NEGATIVE_LRG = -8
@@ -33,16 +38,26 @@ def get_truncated_norm(mean, std, low, upp):
     return truncnorm((low - mean) / std, (upp - mean) / std, loc=mean, scale=sd)
 
 def observation_to_index(obs):
-    assert len(obs) == 2
     wavelength, distance = obs
     return np.ravel_multi_index(
-        (wavelength - MIN_WAVELENGTH, distance),
-        (MAX_WAVELENGTH - MIN_WAVELENGTH, config["road_length"])
+        (wavelength - MIN_WAVELENGTH_OBS, distance - MIN_DISTANCE_OBS),
+        (MAX_WAVELENGTH_OBS - MIN_WAVELENGTH_OBS, MAX_DISTANCE_OBS - MIN_DISTANCE_OBS)
     )
 
 def index_to_observation(idx):
     wavelength, distance = np.unravel_index(
         idx,
-        (MAX_WAVELENGTH - MIN_WAVELENGTH, config["road_length"])
+        (MAX_WAVELENGTH_OBS - MIN_WAVELENGTH_OBS, MAX_DISTANCE_OBS - MIN_DISTANCE_OBS)
     )
-    return wavelength + MIN_WAVELENGTH, distance
+    return wavelength + MIN_WAVELENGTH_OBS, distance + MIN_DISTANCE_OBS
+
+def state_to_observation(state):
+    pass
+    position, speed, light = state
+    return np.ravel_multi_index(
+        (wavelength - , distance - MIN_DISTANCE_OBS),
+        (MAX_WAVELENGTH_OBS - MIN_WAVELENGTH_OBS, MAX_DISTANCE_OBS - MIN_DISTANCE_OBS)
+    )
+
+def observation_to_state(idx):
+    pass
