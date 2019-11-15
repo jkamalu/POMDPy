@@ -6,7 +6,9 @@ class Acceleration(Enum):
     NEGATIVE_LRG = -8
     NEGATIVE_MED = -4
     NEGATIVE_SML = -2
+    NEGATIVE_ONE = -1
     ZERO = 0
+    POSITIVE_ONE = 1
     POSITIVE_SML = 2
     POSITIVE_MED = 4
     POSITIVE_LRG = 8
