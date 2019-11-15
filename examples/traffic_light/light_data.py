@@ -20,20 +20,23 @@ class Belief():
         self.dist = other.dist
         self.dist_confidence = other.dist_confidence
 
+    def normalize(self):
+        total = self.green + self.yellow + self.red
+        self.green /= total
+        self.yellow /= total
+        self.red /= total
+
 class TrafficLightData(HistoricalData):
 
-    def __init__(self, model):
+    def __init__(self, model, belief=Belief()):
         self.model = model
         self.observations_passed = 0
-        self.belief = Belief()
-        self.color_probabilities = [float(1/3), float(1/3), float(1/3)]
-        self.distance_belief = None
-        self.distance_confidence = None
+        self.belief = belief
 
     def copy(self):
         dat = TrafficLightData(self.model)
         dat.observations_passed = self.observations_passed
-        dat.belief = self.beloef
+        dat.belief = self.belief
         return dat
 
     def update(self, other_belief):
@@ -45,19 +48,14 @@ class TrafficLightData(HistoricalData):
         self.observations_passed += 1
 
         ''' ------- Bayes update of belief state -------- '''
-        belief_update(self, old_belief, action, observation)
 
-        next_data.color_probabilities = self.model.belief_update((self.color_probabilities, self.distance_belief, self.distance_confidence)
-        next_data.distance_belief = action
-        next_data.distance_confidence = observation
-
+        next_data.belief = self.model.belief_update(self.belief, action, observation)
         return next_data
 
-    @staticmethod
-    def generate_legal_actions():
+    def generate_legal_actions(self):
         """
         At each non-terminal state, the agent can listen or choose to open the
         door based on the current door probabilities
         """
 
-        raise NotImplementedError("Actions legality is function of state.")
+        return self.model.get_all_actions

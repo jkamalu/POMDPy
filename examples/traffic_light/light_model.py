@@ -1,12 +1,15 @@
 import json
+
 import numpy as np
-from pomdpy.pomdp import model
 from scipy.stats import truncnorm
+
 from .light_action import TrafficLightAction, Acceleration
 from .light_state import TrafficLightState
 from .light_observation import TrafficLightObservation
 from .light_data import TrafficLightData
-from util import *
+from .util import Acceleration, max_distance
+
+from pomdpy.pomdp import model
 from pomdpy.discrete_pomdp import DiscreteActionPool
 from pomdpy.discrete_pomdp import DiscreteObservationPool
 
@@ -156,11 +159,11 @@ class TrafficLightModel(model.Model):
         return DiscreteActionPool(self)
 
     def create_root_historical_data(self, agent):
-        return TigerData(self)
+        return TrafficLightData(self)
 
     ''' --------- BLACK BOX GENERATION --------- '''
 
-    def generate_step(self, action, state=None):
+    def generate_step(self, action, state):
         if action is None:
             print("ERROR: Tried to generate a step with a null action")
             return None
@@ -168,19 +171,24 @@ class TrafficLightModel(model.Model):
             action = TrafficLightAction(action)
 
         result = model.StepResult()
-        result.is_terminal = self.make_next_state(action)
+        result.is_terminal = self.make_next_state(state)
         result.action = action.copy()
-        result.observation = self.make_observation(action)
+        result.observation = self.make_observation(state)
         result.reward = self.make_reward(action, result.is_terminal)
 
         return result
 
-    @staticmethod
-    def make_next_state(action):
-        if action.bin_number == ActionType.LISTEN:
-            return False
-        else:
-            return True
+    def make_next_state(self, state, action):
+        max_position = self.config["road_length"] + self.config["buffer_length"] + self.config["intersection_length"]
+        terminal = state.position >= max_position
+
+        new_speed = state.speed + action.value
+        new_position = state.position + new_speed
+        new_light = (state.light + 1) % sum(self.config["light_cycle"])
+
+        new_state = TrafficLightState(new_position, new_speed, new_light)
+
+        return new_state, terminal
 
     def make_reward(self, action, is_terminal):
         """
@@ -205,52 +213,35 @@ class TrafficLightModel(model.Model):
             print("make_reward - Illegal action was used")
             return 0.0
 
-    def make_observation(self, action):
+    def make_observation(self, action, next_state):
         """
         :param action:
         :return:
         """
-        if action.bin_number > 0:
-            '''
-            No new information is gained by opening a door
-            Since this action leads to a terminal state, we don't care
-            about the observation
-            '''
-            return TigerObservation(None)
-        else:
-            obs = ([0, 1], [1, 0])[self.tiger_door == 1]
-            probability_correct = np.random.uniform(0, 1)
-            if probability_correct <= 0.85:
-                return TigerObservation(obs)
-            else:
-                obs.reverse()
-                return TigerObservation(obs)
+        color_index = state_to_color_index(next_state)
+        color_mean = self.config["color_means"][color_index]
+        color_stdev = self.config["color_stdev"]
+        sampled_wavelength = truncnorm.rvs((MIN_WAVELENGTH_OBS - color_mean) / color_stdev, (MAX_WAVELENGTH_OBS - color_mean) / color_stdev, loc=color_mean, scale=color_stdev, size=1)
+
+        dist_mean = next_state.position
+        dist_stdev = self.config["distance_stdev"]
+        sampled_distance = truncnorm.rvs((MIN_DISTANCE_OBS - dist_mean) / dist_stdev, (MAX_DISTANCE_OBS - dist_mean) / dist_stdev, loc=dist_mean, scale=dist_stdev, size=1)
+
+        return TrafficLightObservation((sampled_wavelength, sampled_distance))
 
     def belief_update(self, old_belief, action, observation):
-        """
-        Belief is a 2-element array, with element in pos 0 signifying probability that the tiger is behind door 1
-
-        :param old_belief:
-        :param action:
-        :param observation:
-        :return:
-        """
-        if action > 1:
-            return old_belief
-
-        probability_correct = 0.85
-        probability_incorrect = 1.0 - probability_correct
-        p1_prior = old_belief[0]
-        p2_prior = old_belief[1]
-
-        # Observation 1 - the roar came from door 0
-        if observation.source_of_roar[0]:
-            observation_probability = (probability_correct * p1_prior) + (probability_incorrect * p2_prior)
-            p1_posterior = old_div((probability_correct * p1_prior),observation_probability)
-            p2_posterior = old_div((probability_incorrect * p2_prior),observation_probability)
-        # Observation 2 - the roar came from door 1
+        if old_belief.dist is not None:
+            b_dist = (old_belief.dist * old_belief.dist_confidence + observation.distance_observed * self.config["distance_stdev"]) / (old_belief.dist_confidence + self.config["distance_stdev"])
+            b_dist_stdev = (old_belief.dist_confidence * self.config["distance_stdev"]) / (old_belief.dist_confidence + self.config["distance_stdev"])
         else:
-            observation_probability = (probability_incorrect * p1_prior) + (probability_correct * p2_prior)
-            p1_posterior = probability_incorrect * p1_prior / observation_probability
-            p2_posterior = probability_correct * p2_prior / observation_probability
-        return np.array([p1_posterior, p2_posterior])
+            b_dist = (observation.distance_observed * self.config["distance_stdev"]) / self.config["distance_stdev"]
+            b_dist_stdev = self.config["distance_stdev"]
+        b_colors = [old_belief.green, old_belief.yellow, old_belief.red]
+        for color in LightColor:
+            color_mean = self.config["color_means"][color.value]
+            color_stdev = self.config["color_stdev"]
+            color_probab = calculate_trunc_norm_prob(observation.wavelength_observed, color_mean, color_stdev, MIN_WAVELENGTH_OBS, MAX_WAVELENGTH_OBS)
+            b_colors[color.value] *= color_probab
+        new_belief = Belief(p_green=b_colors[0], p_yellow=b_colors[1], p_red=b_colors[2], belief_d=b_dist, confidence_d=b_dist_stdev)
+        new_belief.normalize()
+        return new_belief
