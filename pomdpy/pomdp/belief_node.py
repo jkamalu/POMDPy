@@ -86,7 +86,7 @@ class BeliefNode(object):
             child_node = node.get_child(obs)
             if child_node is None:
                 return None
-            child_node.data.update(child_node.get_parent_belief())
+            child_node.data.update(child_node.get_parent_belief().data)
             return child_node
         else:
             return None
