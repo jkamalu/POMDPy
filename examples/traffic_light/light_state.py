@@ -7,6 +7,12 @@ class TrafficLightState(DiscreteState):
         self.speed = speed
         self.light = light
 
+    def copy(self):
+        return TrafficLightState(self.position, self.speed, self.light)
+
+    def as_list(self):
+        return [self.position, self.speed, self.light]
+
     def equals(self, other_state):
         equals = self.position == other_state.position
         equals = self.speed == other_state.speed and equals
@@ -20,4 +26,4 @@ class TrafficLightState(DiscreteState):
         print(self.to_string())
 
     def to_string(self):
-        return "[{} light {} units from car going {} units/sec]".format(self.light, self.position, self.speed)
+        return "[{}-light, car {} units from start moving at {} units/sec]".format(self.light, self.position, self.speed)
