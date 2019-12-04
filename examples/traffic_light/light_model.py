@@ -36,12 +36,15 @@ class TrafficLightModel(model.Model):
     ''' --------- Abstract Methods --------- '''
 
     def is_terminal(self, state):
-        return state.position >= self.road_length + self.intersection_length
+        if state.position >= self.config["road_length"] + self.config["intersection_length"]:
+            return 1
+        else:
+            return 0
 
     def sample_an_init_state(self):
-        random_position = np.random.randint(self.config["road_length"] // 2)
+        random_position = 50 # np.random.randint(self.config["road_length"] // 2)
         speed = self.init_speed
-        random_light = np.random.randint(sum(self.config["light_cycle"]))
+        random_light = 0 # np.random.randint(sum(self.config["light_cycle"]))
         return TrafficLightState(random_position, speed, random_light)
 
     def create_observation_pool(self, solver):
@@ -54,6 +57,7 @@ class TrafficLightModel(model.Model):
         return TrafficLightState(random_position, random_speed, random_light)
 
     def sample_state_informed(self, belief):
+        raise Error("sample_state_informed")
         return belief.sample_particle()
 
     def get_all_states(self):
@@ -84,7 +88,7 @@ class TrafficLightModel(model.Model):
         return legal_actions
 
     def is_valid(self, state):
-        return state.position >= 0 and state.speed >= 0
+        return state.position >= 0 and state.speed >= 0 and state.speed <= self.config["max_speed"]
 
     def reset_for_simulation(self):
         self.start_scenario()
@@ -199,14 +203,13 @@ class TrafficLightModel(model.Model):
 
     def make_next_state(self, state, action):
         max_position = self.config["road_length"] + self.config["intersection_length"]
-        terminal = state.position >= max_position
+        terminal = self.is_terminal(state)
 
         new_speed = state.speed + INDEX_TO_ACTION[action.index]
         new_position = state.position + new_speed
         new_light = (state.light + 1) % sum(self.config["light_cycle"])
 
         new_state = TrafficLightState(new_position, new_speed, new_light)
-
         return new_state, terminal
 
     def make_reward(self, action, state, terminal):
@@ -246,9 +249,15 @@ class TrafficLightModel(model.Model):
         try:
             dist = int(sampled_distance + 0.5)
         except:
-            print("sampled_distance = -inf")
+            print(f"sampled_distance = {sampled_distance}")
             dist = dist_mean
-        return TrafficLightObservation((wl, dist, next_state.speed))
+
+        try:
+            observation = TrafficLightObservation((wl, dist, next_state.speed))
+            return observation
+        except:
+            print(wl, dist, action, next_state.to_string(), self.is_terminal(next_state))
+            raise ValueError("light_model.py error")
 
     def belief_update(self, old_belief, action, observation):
         if old_belief.dist is not None:

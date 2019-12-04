@@ -5,11 +5,11 @@
 
     "light_cycle": [10, 2, 10],
 
-    "road_length": 400,
+    "road_length": 40,
     "buffer_length": 10,
     "intersection_length": 20,
     "speed_limit": 20,
-    "max_speed": 40,
+    "max_speed": 1,
 
     "distance_stdev": 4,
     "color_stdev": 50,

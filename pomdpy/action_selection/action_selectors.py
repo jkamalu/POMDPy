@@ -18,7 +18,6 @@ def ucb_action(mcts, current_node, greedy):
         # Skip illegal actions
         if not action_entry.is_legal:
             continue
-
         current_q = action_entry.mean_q_value
 
         # If the UCB coefficient is 0, this is greedy Q selection
@@ -30,11 +29,15 @@ def ucb_action(mcts, current_node, greedy):
                 best_actions = []
             best_q_value = current_q
             # best actions is a list of Discrete Actions
-            best_actions.append(action_entry.get_action())
+            action = action_entry.get_action()
+            print("Adding {} as best".format(action))
+            best_actions.append(action)
 
     assert best_actions.__len__() is not 0
-
-    return random.choice(best_actions)
+    print("Best actions: {}".format(best_actions))
+    choice = random.choice(best_actions)
+    print("in ucb actions, choosing {}".format(choice))
+    return choice
 
 
 def e_greedy(current_node, epsilon):

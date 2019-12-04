@@ -95,10 +95,17 @@ class BeliefTreeSolver(Solver):
         """
         legal_actions = belief_node.data.generate_legal_actions()
 
+        print()
+        print("ROLLOUT search")
+        print(legal_actions)
+        print()
+
         # rollout each action once
         for i in range(legal_actions.__len__()):
             state = belief_node.sample_particle()
-            action = legal_actions[i % legal_actions.__len__()]
+            action = legal_actions[i]
+
+            print(f"believed state: {state.to_string()}", f"action: {action}")
 
             # model.generate_step casts the variable action from an int to the proper DiscreteAction subclass type
             step_result, is_legal = self.model.generate_step(state, action)
@@ -109,8 +116,16 @@ class BeliefTreeSolver(Solver):
                 delayed_reward = self.rollout(child_node)
             else:
                 delayed_reward = 0
-
+            print("input to action was {}".format(step_result.action.bin_number))
             action_mapping_entry = belief_node.action_map.get_entry(step_result.action.bin_number)
+
+            action = action_mapping_entry.get_action()
+            next_state, is_terminal = self.model.make_next_state(state, action)
+            print("The action for the action entry is {}".format(action))
+            print("We think the next is {}".format(next_state.to_string()))
+            legality = self.model.is_valid(next_state)
+            action_mapping_entry.set_legal(is_legal)
+            # print(type(action_mapping_entry))
 
             q_value = action_mapping_entry.mean_q_value
 
@@ -136,6 +151,12 @@ class BeliefTreeSolver(Solver):
         discounted_reward_sum = 0.0
         discount = 1.0
         num_steps = 0
+
+        # print()
+        # print("rollout")
+        # print(state.to_string())
+        # print(legal_actions)
+        # print()
 
         while num_steps < self.model.max_depth and not is_terminal:
             legal_action = random.choice(legal_actions)
@@ -210,4 +231,3 @@ class BeliefTreeSolver(Solver):
         self.belief_tree_index = child_belief_node
         if prune:
             self.prune(self.belief_tree_index)
-

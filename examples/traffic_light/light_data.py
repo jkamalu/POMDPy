@@ -66,6 +66,7 @@ class TrafficLightData(HistoricalData):
         legal_actions = []
         for index in INDEX_TO_ACTION:
             if self.speed + INDEX_TO_ACTION[index] >= 0 and self.speed + INDEX_TO_ACTION[index] <= self.model.config["max_speed"]:
+                print(self.speed, index)
                 legal_actions.append(index)
 
         return legal_actions
