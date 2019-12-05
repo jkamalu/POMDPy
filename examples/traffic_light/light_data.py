@@ -55,6 +55,7 @@ class TrafficLightData(HistoricalData):
 
         next_data.belief = self.model.belief_update(self.belief, action, observation)
         next_data.speed = observation.speed
+        print(f"The child's speed is: {next_data.speed}")
         return next_data
 
     def generate_legal_actions(self):

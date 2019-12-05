@@ -42,9 +42,15 @@ class TrafficLightModel(model.Model):
             return 0
 
     def sample_an_init_state(self):
+<<<<<<< Updated upstream
         random_position = 50 # np.random.randint(self.config["road_length"] // 2)
         speed = self.init_speed
         random_light = 0 # np.random.randint(sum(self.config["light_cycle"]))
+=======
+        random_position = 0 #np.random.randint(self.config["road_length"] // 2)
+        speed = self.init_speed
+        random_light =  0 #np.random.randint(sum(self.config["light_cycle"]))
+>>>>>>> Stashed changes
         return TrafficLightState(random_position, speed, random_light)
 
     def create_observation_pool(self, solver):
@@ -195,6 +201,7 @@ class TrafficLightModel(model.Model):
 
         result = model.StepResult()
         result.next_state, result.is_terminal = self.make_next_state(state, action)
+        # print("The next state is: {}".format(result.next_state.to_string()))
         result.action = action.copy()
         result.observation = self.make_observation(action, result.next_state)
         result.reward = self.make_reward(action, result.next_state, result.is_terminal)
@@ -251,6 +258,7 @@ class TrafficLightModel(model.Model):
         except:
             print(f"sampled_distance = {sampled_distance}")
             dist = dist_mean
+<<<<<<< Updated upstream
 
         try:
             observation = TrafficLightObservation((wl, dist, next_state.speed))
@@ -258,6 +266,14 @@ class TrafficLightModel(model.Model):
         except:
             print(wl, dist, action, next_state.to_string(), self.is_terminal(next_state))
             raise ValueError("light_model.py error")
+=======
+        try:
+            obs = TrafficLightObservation((wl, dist, next_state.speed))
+        except:
+            print(f"The observation we've made is wl: {wl}, dist: {dist}, state: {next_state.to_string()} from action {action}")
+            print("It's going to be out of range.")
+        return obs
+>>>>>>> Stashed changes
 
     def belief_update(self, old_belief, action, observation):
         if old_belief.dist is not None:

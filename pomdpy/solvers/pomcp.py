@@ -75,7 +75,9 @@ class POMCP(BeliefTreeSolver):
             self.rollout_search(self.belief_tree_index)
         else:
             self.monte_carlo_approx(eps, start_time)
-        return ucb_action(self, self.belief_tree_index, True)
+        action = ucb_action(self, self.belief_tree_index, True)
+        print(f"Returning action {action}")
+        return action
 
     def simulate(self, belief_node, eps, start_time):
         """
@@ -88,6 +90,7 @@ class POMCP(BeliefTreeSolver):
         delayed_reward = 0
 
         state = belief_node.sample_particle()
+        print("The state we're in is: {}".format(state.to_string()))
 
         # Time expired
         if time.time() - start_time > self.model.action_selection_timeout:
@@ -95,7 +98,6 @@ class POMCP(BeliefTreeSolver):
             return 0
 
         action = ucb_action(self, belief_node, False)
-
         # Search horizon reached
         if tree_depth >= self.model.max_depth:
             console(4, module, "Search horizon reached")

@@ -93,6 +93,7 @@ class BeliefTreeSolver(Solver):
         the highest evaluation
         :return:
         """
+        print("About to perform rollout search.")
         legal_actions = belief_node.data.generate_legal_actions()
 
         print()
@@ -103,20 +104,22 @@ class BeliefTreeSolver(Solver):
         # rollout each action once
         for i in range(legal_actions.__len__()):
             state = belief_node.sample_particle()
+            print("Believed state is: {}".format(state.to_string()))
             action = legal_actions[i]
-
-            print(f"believed state: {state.to_string()}", f"action: {action}")
+            print("The action we're considering is: {}".format(action))
 
             # model.generate_step casts the variable action from an int to the proper DiscreteAction subclass type
             step_result, is_legal = self.model.generate_step(state, action)
-
+            print(f"The legality is {is_legal}")
             if not step_result.is_terminal:
                 child_node, added = belief_node.create_or_get_child(step_result.action, step_result.observation)
+                print("Added a child node... {}, {}".format(child_node, added))
                 child_node.state_particles.append(step_result.next_state)
                 delayed_reward = self.rollout(child_node)
             else:
                 delayed_reward = 0
-            print("input to action was {}".format(step_result.action.bin_number))
+
+            print(f"The action we made an entry for is: {step_result.action}")
             action_mapping_entry = belief_node.action_map.get_entry(step_result.action.bin_number)
 
             action = action_mapping_entry.get_action()
@@ -186,6 +189,10 @@ class BeliefTreeSolver(Solver):
         self.model.update(step_result)
 
         child_belief_node = self.belief_tree_index.get_child(step_result.action, step_result.observation)
+        try:
+            print("The child belief node we are setting the index to is: {}".format(child_belief_node.sample_particle()))
+        except:
+            print("There was no child node.")
 
         # If the child_belief_node is None because the step result randomly produced a different observation,
         # grab any of the beliefs extending from the belief node's action node

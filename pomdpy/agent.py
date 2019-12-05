@@ -165,12 +165,14 @@ class Agent:
             start_time = time.time()
 
             # action will be of type Discrete Action
+            print("The state I am choosing an action for is: {}".format(state.to_string()))
             action = solver.select_eps_greedy_action(eps, start_time)
+            print(f"Action was: {action}")
 
             # update epsilon
             if eps > self.model.epsilon_minimum:
                 eps *= self.model.epsilon_decay
-
+            print("The state taken with the action is: {}".format(state.to_string()))
             step_result, is_legal = self.model.generate_step(state, action)
 
             reward += step_result.reward
@@ -183,6 +185,7 @@ class Agent:
             self.display_step_result(i, step_result)
 
             if not step_result.is_terminal or not is_legal:
+                print("I'm updating the belief node.")
                 solver.update(step_result)
 
             # Extend the history sequence

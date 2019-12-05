@@ -86,7 +86,7 @@ class BeliefNode(object):
             child_node = node.get_child(obs)
             if child_node is None:
                 return None
-            child_node.data.update(child_node.get_parent_belief().data)
+            child_node.data.update(child_node.get_parent_belief())
             return child_node
         else:
             return None
@@ -106,11 +106,13 @@ class BeliefNode(object):
         """
         action_node = self.action_map.get_action_node(action)
         if action_node is None:
+            print("Action node was none.")
             action_node = self.action_map.create_action_node(action)
             action_node.set_mapping(self.solver.observation_pool.create_observation_mapping(action_node))
         child_node, added = action_node.create_or_get_child(obs)
 
         if added:   # if the child node was added - it is new
+            print("it's a new one")
             if self.data is not None:
                 child_node.data = self.data.create_child(action, obs)
             child_node.action_map = self.solver.action_pool.create_action_mapping(child_node)
@@ -120,5 +122,6 @@ class BeliefNode(object):
             # self.solver.model.num_reused_nodes += 1
 
             # Update the re-used child belief node's data
+            print("updating te action mapping")
             child_node.data.update(child_node.get_parent_belief())
         return child_node, added
